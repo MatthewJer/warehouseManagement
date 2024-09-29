@@ -3,7 +3,8 @@
 
 namespace terminal {
 
-    void ClearConsole ();
+    void ClearConsole      ();
+    void GetCursorPosition (int & theRow, int & theCol);
     void SetCursorPosition (int theRow, int theCol);
 };
 

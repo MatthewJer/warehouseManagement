@@ -1,4 +1,6 @@
 #include <distributor.hpp>
+#include <cmath>
+#include <iostream>
 
 Distributer::Distributer (std::vector <Warehouse> & theWarehouses) :
     mWarehouses           (theWarehouses),
@@ -32,9 +34,17 @@ void Distributer::DistributeInventory ()
 {
     for (size_t index : mWarehouseRouteOrder) {
         auto & warehouse = mWarehouses.at (index);
-        mCurrentPackageCount += warehouse.GetInventoryCount () - mTargetInventoryCount;
+        int packagesFromTo = warehouse.GetInventoryCount () - mTargetInventoryCount;
+        if (packagesFromTo > 0) {
+            std::cout << "Nehme " << packagesFromTo << " aus dem Warenhaus " << index + 1 << "." << std::endl;
+        } else {
+            std::cout << "Lege " << std::abs (packagesFromTo) << " in Warenhaus " << index + 1 << " ab." << std::endl;
+        }
+        mCurrentPackageCount += packagesFromTo;
         if (mCurrentPackageCount < 0)
             throw std::runtime_error ("mCurrentPackageCount should not be < 0");
         warehouse.SetInventoryCount (mTargetInventoryCount);
     }
+    std::cout << "Drücken Sie eine beliebige Taste, um zum Menü zurückzukehren." << std::endl;
+    std::cin.get ();
 }

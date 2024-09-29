@@ -8,11 +8,11 @@ class App {
 public:
     App ();
 
-    void Run ();
+    void Run            ();
 private:
-    void Distribute      ();
-    void EditWarehouses  ();
-    void PrintMenu       ();
+    bool Distribute     ();
+    void EditWarehouses ();
+    void HandleMenu     ();
     
     std::vector <Warehouse> mWarehouses;
 };

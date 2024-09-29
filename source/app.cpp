@@ -2,6 +2,7 @@
 #include <distributor.hpp>
 #include <iostream>
 #include <terminal.hpp>
+#include <iomanip>
 
 namespace {
     void PrintMenuOptions ()
@@ -14,11 +15,28 @@ namespace {
 
     void PrintWarehouseOptions (std::vector <Warehouse> const & theWarehouses)
     {
-        for (size_t index; index < theWarehouses; ++index) {
-            std::cout << std::left << std::setw (20)
+        for (size_t index = 0; index < theWarehouses.size (); ++index) {
+            std::cout << std::left << std::setw (20) << "Warenhaus " + std::to_string (index + 1)
+                      << std::setw (20) << "Aktuell: " + std::to_string (theWarehouses.at (index).GetInventoryCount ())
+                      << std::setw (20) << "Eingabe: " << std::endl; 
         }
         std::cout << "+ Zum hinzufügen eines neuen Warenhauses. - Zum Entfernen." << std::endl;
-        std::cout << "Mit der Backspacetaste geht's zurück. Mit Enter wird eine Eingabe bestätigt." << std::endl;
+        std::cout << "Verwenden Sie die Pfeiltesten hoch und runter zum Navigieren." << std::endl;
+        std::cout << "Mit der 'q' geht's zurück. Mit Enter wird eine Eingabe bestätigt." << std::endl;
+    }
+
+    bool IsNumber (char character)
+    {
+        return character >= '0' && character <= '9';
+    }
+
+    unsigned short StringToUnsignedShort (std::string const & theString)
+    {
+        unsigned long value = std::stoul (theString);
+        if (value > std::numeric_limits <unsigned short>::max ()) {
+            throw std::out_of_range ("Value exceeds unsigned short range");
+        }
+        return static_cast <unsigned short> (value);
     }
 }
 
@@ -29,30 +47,94 @@ App::App () :
 
 void App::Run ()
 {
-    PrintMenu ();
+    HandleMenu ();
 }
 
-void App::Distribute ()
+bool App::Distribute ()
 {
     Distributer distributer (mWarehouses);
-    if (distributer.CalculateRoute ()) {
+    bool canDistribute = distributer.CalculateRoute ();
+    if (canDistribute) {
+        terminal::ClearConsole ();
         distributer.DistributeInventory ();
-    } else {
-        terminal::SetCursorPosition (6, 1);
-        std::cout << "Für eine Verteilung der Pakete muss die Anzahl glatt durch die Warenhäuser teilbar sein." << std::endl;
     }
+    return canDistribute;
 }
 
 void App::EditWarehouses ()
 {
     terminal::ClearConsole ();
     terminal::SetCursorPosition (1, 1);
+    PrintWarehouseOptions (mWarehouses);
+    size_t currentWarehouse = mWarehouses.size () > 0 ? 1 : 0;
+    constexpr int colPos = 50;
+    if (currentWarehouse > 0)
+        terminal::SetCursorPosition (currentWarehouse, colPos);
+    std::string currentNumber;
     while (true) {
-
+        char characterPressed = std::cin.get ();
+        if (characterPressed == '\e') {
+            characterPressed = std::cin.get ();
+            if (characterPressed == '[') {
+                characterPressed = std::cin.get ();
+                if (characterPressed == 'A' && currentWarehouse > 1) { //Arrow up
+                    terminal::SetCursorPosition (currentWarehouse, colPos);
+                    std::cout << "                    ";
+                    terminal::SetCursorPosition (currentWarehouse, colPos);
+                    --currentWarehouse;
+                    terminal::SetCursorPosition (currentWarehouse, colPos);
+                    currentNumber = "";
+                } else if (characterPressed == 'B' && currentWarehouse < mWarehouses.size ()) {
+                    terminal::SetCursorPosition (currentWarehouse, colPos);
+                    std::cout << "                    ";
+                    terminal::SetCursorPosition (currentWarehouse, colPos);
+                    ++currentWarehouse;
+                    terminal::SetCursorPosition (currentWarehouse, colPos);
+                    currentNumber = "";
+                }
+            }
+        } else if (characterPressed == '+') {
+            mWarehouses.push_back (Warehouse ());
+            terminal::ClearConsole ();
+            terminal::SetCursorPosition (1, 1);
+            PrintWarehouseOptions (mWarehouses);
+            currentWarehouse = mWarehouses.size () > 0 ? 1 : 0;
+            terminal::SetCursorPosition (currentWarehouse, colPos);
+        } else if (characterPressed == '-' && mWarehouses.size () > 0) {
+            mWarehouses.erase (mWarehouses.begin () + currentWarehouse - 1);
+            terminal::ClearConsole ();
+            terminal::SetCursorPosition (1, 1);
+            PrintWarehouseOptions (mWarehouses);
+            currentWarehouse = mWarehouses.size () > 0 ? 1 : 0;
+            terminal::SetCursorPosition (currentWarehouse, colPos);
+        } else if (characterPressed == 'q') {
+            return;
+        } else if (IsNumber (characterPressed) && mWarehouses.size () > 0) {
+            currentNumber += characterPressed;
+            std::cout << characterPressed;
+        } else if (characterPressed == '\x7f') { //Backspace
+            int row = 0;
+            int column = 0;
+            terminal::GetCursorPosition (row, column);
+            if (column <= colPos)
+                continue;
+            --column;
+            terminal::SetCursorPosition (row, column);
+            std::cout << " ";
+            terminal::SetCursorPosition (row, column);
+        } else if (characterPressed == '\n' && currentNumber.size () > 0) {
+            mWarehouses.at (currentWarehouse - 1).SetInventoryCount (StringToUnsignedShort (currentNumber));
+            terminal::SetCursorPosition (currentWarehouse, 30);
+            std::cout << currentNumber << "        ";
+            currentNumber = "";
+            terminal::SetCursorPosition (currentWarehouse, colPos);
+            std::cout << "                    ";
+            terminal::SetCursorPosition (currentWarehouse, colPos);
+        }
     }
 }
 
-void App::PrintMenu ()
+void App::HandleMenu ()
 {
     terminal::ClearConsole ();
     PrintMenuOptions ();
@@ -70,8 +152,7 @@ void App::PrintMenu ()
                     terminal::SetCursorPosition (currentMenuIndex, 1);
                     std::cout << " ";
                     --currentMenuIndex;
-                }
-                else if (characterPressed == 'B' && currentMenuIndex < 3) {//Arrow Down
+                } else if (characterPressed == 'B' && currentMenuIndex < 3) {//Arrow Down
                     terminal::SetCursorPosition (currentMenuIndex, 1);
                     std::cout << " ";
                     ++currentMenuIndex;
@@ -82,6 +163,14 @@ void App::PrintMenu ()
                 EditWarehouses ();
                 terminal::ClearConsole ();
                 PrintMenuOptions ();
+            } else if (currentMenuIndex == 2) {
+                bool couldDistribute = Distribute ();
+                terminal::ClearConsole ();
+                PrintMenuOptions ();
+                if (! couldDistribute) {
+                    std::cout << "Pakete konnten nicht verteilt werden,"
+                              << " da die Anzahl nicht glatt durch die Warenhäuser Teilbar ist" << std::endl;
+                }
             } else if (currentMenuIndex == 3)
                 std::exit (0);
         }
