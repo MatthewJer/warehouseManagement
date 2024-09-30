@@ -35,14 +35,18 @@ void Distributer::DistributeInventory ()
     for (size_t index : mWarehouseRouteOrder) {
         auto & warehouse = mWarehouses.at (index);
         int packagesFromTo = warehouse.GetInventoryCount () - mTargetInventoryCount;
-        if (packagesFromTo > 0) {
-            std::cout << "Nehme " << packagesFromTo << " aus dem Warenhaus " << index + 1 << "." << std::endl;
-        } else {
-            std::cout << "Lege " << std::abs (packagesFromTo) << " in Warenhaus " << index + 1 << " ab." << std::endl;
-        }
         mCurrentPackageCount += packagesFromTo;
         if (mCurrentPackageCount < 0)
             throw std::runtime_error ("mCurrentPackageCount should not be < 0");
+        if (packagesFromTo > 0) {
+            std::cout << "Nehme " << packagesFromTo << " aus dem Warenhaus " << index + 1 << "."
+            << "Habe " << mCurrentPackageCount << " Pakete." << std::endl;
+        } else {
+            std::cout << "Lege " << std::abs (packagesFromTo) << " in Warenhaus " << index + 1 << " ab."
+            << "Habe " << mCurrentPackageCount << " Pakete." << std::endl;
+        }
+        
+        
         warehouse.SetInventoryCount (mTargetInventoryCount);
     }
     std::cout << "Drücken Sie eine beliebige Taste, um zum Menü zurückzukehren." << std::endl;

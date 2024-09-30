@@ -94,7 +94,7 @@ void App::EditWarehouses ()
                 }
             }
         } else if (characterPressed == '+') {
-            mWarehouses.push_back (Warehouse ());
+            mWarehouses.emplace_back ();
             terminal::ClearConsole ();
             terminal::SetCursorPosition (1, 1);
             PrintWarehouseOptions (mWarehouses);
