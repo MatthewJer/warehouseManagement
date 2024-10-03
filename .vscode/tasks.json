@@ -3,11 +3,9 @@
         {
             "type": "cppbuild",
             "label": "build",
-            "command": "g++",
+            "command": "g++-14",
             "args": [
-                "-fcolor-diagnostics",
-                "-fansi-escape-codes",
-                "-std=c++20",
+                "-std=c++23",
                 "-I${workspaceFolder}/include",
                 "-g",
                 "${workspaceFolder}/source/**.cpp",

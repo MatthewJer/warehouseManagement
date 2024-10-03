@@ -1,6 +1,7 @@
 #include <distributor.hpp>
 #include <cmath>
 #include <iostream>
+#include <ranges>
 
 Distributer::Distributer (std::vector <Warehouse> & theWarehouses) :
     mWarehouses           (theWarehouses),
@@ -20,8 +21,8 @@ bool Distributer::CalculateRoute ()
         return false;
     }
     mTargetInventoryCount = sum / mWarehouses.size ();
-    for (size_t index = 0; index < mWarehouses.size (); ++index) {
-        if (mWarehouses.at (index).GetInventoryCount () > mTargetInventoryCount) {
+    for (auto [index, warehouse] : mWarehouses | std::ranges::views::enumerate) {
+        if (warehouse.GetInventoryCount () > mTargetInventoryCount) {
             mWarehouseRouteOrder.insert (mWarehouseRouteOrder.begin (), index);
         } else {
             mWarehouseRouteOrder.push_back (index);
@@ -40,10 +41,10 @@ void Distributer::DistributeInventory ()
             throw std::runtime_error ("mCurrentPackageCount should not be < 0");
         if (packagesFromTo > 0) {
             std::cout << "Nehme " << packagesFromTo << " aus dem Warenhaus " << index + 1 << "."
-            << "Habe " << mCurrentPackageCount << " Pakete." << std::endl;
+            << " Habe " << mCurrentPackageCount << " Pakete." << std::endl;
         } else {
             std::cout << "Lege " << std::abs (packagesFromTo) << " in Warenhaus " << index + 1 << " ab."
-            << "Habe " << mCurrentPackageCount << " Pakete." << std::endl;
+            << " Habe " << mCurrentPackageCount << " Pakete." << std::endl;
         }
         
         

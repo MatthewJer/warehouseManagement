@@ -122,6 +122,7 @@ void App::EditWarehouses ()
             terminal::SetCursorPosition (row, column);
             std::cout << " ";
             terminal::SetCursorPosition (row, column);
+            currentNumber.erase (--currentNumber.end ());
         } else if (characterPressed == '\n' && currentNumber.size () > 0) {
             mWarehouses.at (currentWarehouse - 1).SetInventoryCount (StringToUnsignedShort (currentNumber));
             terminal::SetCursorPosition (currentWarehouse, 30);
